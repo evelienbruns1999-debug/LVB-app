@@ -1,0 +1,14 @@
+{
+  "short_name": "TaakMaatje",
+  "name": "TaakMaatje – Stap voor stap",
+  "icons": [
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1D9E75",
+  "background_color": "#F5FBF8",
+  "orientation": "portrait",
+  "description": "Step-by-step daily task helper for people with disabilities and autism."
+}

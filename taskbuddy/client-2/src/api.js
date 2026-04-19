@@ -1,5 +1,5 @@
 // api.js - all backend calls
-const BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const BASE = process.env.REACT_APP_API_URL || 'https://taskbuddylvbapp.onrender.com';
 
 function headers(token) {
   const h = { 'Content-Type': 'application/json' };

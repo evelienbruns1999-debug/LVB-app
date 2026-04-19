@@ -198,3 +198,4 @@ No paid services required. Runs entirely on your own infrastructure.
 ## Licence
 
 Built for internal use. All rights reserved.
+yes

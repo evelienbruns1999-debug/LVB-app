@@ -4,7 +4,7 @@ import { getIcon } from '../pictograms/Icons';
 import { speak, useVoice } from '../hooks/useVoice';
 import { api } from '../api';
 
-const RESET_MS = 20 * 60 * 1000; // 20 minutes
+const RESET_MS = 20 * 60 * 1000;
 
 export default function TaskScreen({ task, client, onBack, onStepsCompleted }) {
   const [steps, setSteps] = useState(task.steps.map(s => ({ text: s, done: false })));
@@ -13,6 +13,9 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted }) {
   const [timerSec, setTimerSec] = useState(300);
   const [confetti, setConfetti] = useState([]);
   const [resetMsg, setResetMsg] = useState(false);
+  // nextAnnounce: shown for ~2.5s after ticking a step, displays next step + its pictogram
+  const [nextAnnounce, setNextAnnounce] = useState(null); // { stepNum, text }
+  const announceTimerRef = useRef(null);
   const lastActivityRef = useRef(Date.now());
   const resetTimerRef = useRef(null);
 
@@ -60,14 +63,24 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted }) {
     setTimeout(()=>setConfetti([]),2500);
   }
 
+  function showAnnouncement(stepNum, text) {
+    clearTimeout(announceTimerRef.current);
+    setNextAnnounce({ stepNum, text });
+    announceTimerRef.current = setTimeout(() => setNextAnnounce(null), 3000);
+  }
+
   function toggleStep(i) {
     recordActivity();
     const updated = steps.map((s,idx)=>idx===i?{...s,done:!s.done}:s);
     setSteps(updated);
     if (!steps[i].done) {
       const nextUndone = updated.findIndex(s=>!s.done);
-      if (nextUndone>=0) speak(NL.voiceNextStep(nextUndone+1, updated[nextUndone].text));
-      else {
+      if (nextUndone >= 0) {
+        const nextText = updated[nextUndone].text;
+        speak(NL.voiceNextStep(nextUndone + 1, nextText));
+        showAnnouncement(nextUndone + 1, nextText);
+      } else {
+        setNextAnnounce(null);
         setFinished(true); spawnConfetti();
         speak(NL.voiceAllDone(task.label));
         const stepsCompleted = updated.filter(s=>s.done).length;
@@ -142,6 +155,37 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted }) {
             </span>
             {listening ? NL.voiceListening : NL.voiceHint}
           </button>
+        )}
+
+        {/* Next-step announcement — shown after ticking a step */}
+        {nextAnnounce && !finished && (
+          <div
+            key={nextAnnounce.stepNum}
+            style={{
+              background: 'var(--purple-lt)', border: '2px solid var(--purple)',
+              borderRadius: 16, padding: '18px 16px', marginBottom: 16,
+              display: 'flex', alignItems: 'center', gap: 16,
+              animation: 'pop 0.35s ease both',
+            }}
+          >
+            {/* Big pictogram */}
+            <div style={{
+              width: 72, height: 72, background: 'white', borderRadius: 14,
+              border: '2px solid var(--purple)', padding: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, color: '#1A1A2E',
+            }}>
+              <Icon2 />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                Volgende stap {nextAnnounce.stepNum}
+              </div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 20, fontWeight: 600, color: 'var(--purple-dk)', lineHeight: 1.25 }}>
+                {nextAnnounce.text}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Steps */}

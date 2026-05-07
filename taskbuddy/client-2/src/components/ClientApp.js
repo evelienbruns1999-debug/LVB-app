@@ -8,19 +8,46 @@ import MoodScreen from './MoodScreen';
 import OverwhelmedScreen from './OverwhelmedScreen';
 import GrowingTree from './GrowingTree';
 import MedReminder from './MedReminder';
+import AgendaScreen from './AgendaScreen';
 
 function todayKey() { return new Date().toDateString(); }
-function getTodaySteps(clientId) {
-  return parseInt(localStorage.getItem(`steps_${clientId}_${todayKey()}`) || '0', 10);
-}
-function addTodaySteps(clientId, n) {
-  const cur = getTodaySteps(clientId);
-  localStorage.setItem(`steps_${clientId}_${todayKey()}`, cur + n);
+function getTodaySteps(id) { return parseInt(localStorage.getItem(`steps_${id}_${todayKey()}`) || '0', 10); }
+function addTodaySteps(id, n) {
+  const cur = getTodaySteps(id);
+  localStorage.setItem(`steps_${id}_${todayKey()}`, cur + n);
   return cur + n;
 }
 
+// Nav tab icons as inline SVG
+function TabIcon({ name }) {
+  if (name === 'taken') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3"/>
+      <polyline points="9,12 11,14 15,10"/>
+    </svg>
+  );
+  if (name === 'agenda') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+      <line x1="8" y1="15" x2="8" y2="15" strokeWidth="3"/><line x1="12" y1="15" x2="12" y2="15" strokeWidth="3"/>
+    </svg>
+  );
+  if (name === 'stemming') return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M8 14 Q12 18 16 14" fill="none"/>
+      <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none"/>
+    </svg>
+  );
+  return null;
+}
+
 export default function ClientApp({ client, onLogout }) {
-  const [screen, setScreen] = useState('home');
+  const [tab, setTab] = useState('taken'); // taken | agenda | stemming
+  const [screen, setScreen] = useState('home'); // home | taak | vol_hoofd
   const [activeTask, setActiveTask] = useState(null);
   const [customTasks, setCustomTasks] = useState([]);
   const [todaySteps, setTodaySteps] = useState(getTodaySteps(client.id));
@@ -49,131 +76,138 @@ export default function ClientApp({ client, onLogout }) {
   const { listening, supported, startListening } = useVoice(handleVoiceResult);
 
   function openTask(task) {
-    if (task.special === 'stemming') { setScreen('stemming'); return; }
+    if (task.special === 'stemming') { setTab('stemming'); return; }
     setActiveTask(task); setScreen('taak');
     speak(NL.voiceStartTask(task.label));
   }
 
   function goHome() { setScreen('home'); setActiveTask(null); setTodaySteps(getTodaySteps(client.id)); }
-
-  function handleStepsCompleted(n) {
-    const total = addTodaySteps(client.id, n);
-    setTodaySteps(total);
-  }
+  function handleStepsCompleted(n) { setTodaySteps(addTodaySteps(client.id, n)); }
 
   async function sendHelp() {
-    // Store a help request in localStorage (begeleider can poll or use push in production)
     const reqs = JSON.parse(localStorage.getItem('help_requests') || '[]');
     reqs.push({ client_id: client.id, client_name: client.name, time: new Date().toISOString() });
     localStorage.setItem('help_requests', JSON.stringify(reqs));
-    // Also try to log as a completion-type event via API
     try { await api.logCompletion({ client_id: client.id, task_id: 'hulp', task_name: 'Begeleiding nodig', steps_total: 1, steps_done: 1, mood: 'hulp' }); } catch (_) {}
     setHelpSent(true); speak(NL.helpSent);
     setTimeout(() => { setShowHelp(false); setHelpSent(false); }, 3000);
   }
 
+  // Full-screen task in progress
   if (screen === 'taak' && activeTask) return <TaskScreen task={activeTask} client={client} onBack={goHome} onStepsCompleted={handleStepsCompleted} />;
-  if (screen === 'stemming') return <MoodScreen client={client} onBack={goHome} />;
   if (screen === 'vol_hoofd') return <OverwhelmedScreen client={client} onBack={goHome} />;
 
   const allTasks = [...DEFAULT_TASKS, ...customTasks];
 
   return (
-    <div style={{ minHeight: '100vh', paddingBottom: 100 }}>
+    <div style={{ minHeight: '100vh', paddingBottom: 70 }}>
       <MedReminder clientId={client.id} />
 
-      {/* Header */}
-      <div className="sticky-header" style={{ padding: '14px 18px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* ── HEADER (always visible) ── */}
+      <div className="sticky-header" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Hallo!</p>
-          <h2 style={{ fontSize: 22 }}>{client.name} 👋</h2>
+          <p style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Hallo!</p>
+          <h2 style={{ fontSize: 20 }}>{client.name} 👋</h2>
         </div>
-        <button onClick={onLogout} style={{ background: 'var(--yellow-lt)', border: '2px solid var(--yellow)', borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 800, color: 'var(--yellow-dk)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}>
-          Uitloggen
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setScreen('vol_hoofd')}
+            className="btn btn-orange btn-sm"
+            style={{ fontSize: 12, padding: '7px 11px', gap: 5 }}>
+            🧠 Vol hoofd
+          </button>
+          <button onClick={() => setShowHelp(true)}
+            className="btn btn-coral btn-sm"
+            style={{ fontSize: 12, padding: '7px 11px', gap: 5 }}>
+            🚨 Hulp
+          </button>
+        </div>
       </div>
 
-      <div style={{ padding: '16px 16px 0' }}>
-        {/* Growing tree streak */}
-        <div className="card card-green" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <GrowingTree steps={todaySteps} />
-          <div>
-            <div style={{ fontFamily: 'var(--font-head)', fontSize: 17, fontWeight: 600, color: 'var(--green-dk)', marginBottom: 4 }}>{NL.streakTitle}</div>
-            <div style={{ fontSize: 13, color: 'var(--text-mid)', fontWeight: 700 }}>
-              {NL.streakEncourage[Math.min(Math.floor(todaySteps/2), NL.streakEncourage.length-1)]}
+      {/* ── TAKEN TAB ── */}
+      {tab === 'taken' && (
+        <div style={{ padding: '14px 16px 0' }}>
+
+          {/* Streak tree — compact row */}
+          <div className="card" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px' }}>
+            <GrowingTree steps={todaySteps} />
+            <div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 600, color: 'var(--green-dk)' }}>
+                {NL.streakTitle}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-mid)', fontWeight: 600 }}>
+                {NL.streakEncourage[Math.min(Math.floor(todaySteps / 2), NL.streakEncourage.length - 1)]}
+              </div>
             </div>
           </div>
+
+          {/* Voice button */}
+          {supported && (
+            <button onClick={startListening}
+              className={`btn btn-full ${listening ? 'btn-coral' : 'btn-ghost'}`}
+              style={{ marginBottom: 14, fontSize: 15, gap: 8, border: listening ? 'none' : '1.5px solid var(--purple)', color: listening ? '#fff' : 'var(--purple)' }}>
+              <span style={{ fontSize: 18 }}>🎙️</span>
+              {listening ? NL.listening : NL.tapToSpeak}
+            </button>
+          )}
+
+          <h3 style={{ marginBottom: 10 }}>{NL.whatToDo}</h3>
+
+          {/* Task grid — AAC style */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {allTasks.map((task, i) => {
+              const TaskIcon = getIcon(task.id);
+              return (
+                <button key={task.id} onClick={() => openTask(task)}
+                  className="pic-btn fade-up"
+                  style={{ animationDelay: `${i * 40}ms` }}>
+                  <div className="pic-wrap"><TaskIcon /></div>
+                  <span>{task.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+      )}
 
-        {/* Action buttons row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-          {/* Vol hoofd */}
-          <button onClick={() => setScreen('vol_hoofd')}
-            className="btn btn-orange btn-full"
-            style={{ flexDirection: 'column', gap: 8, padding: '14px 10px', borderRadius: 16, fontSize: 15, lineHeight: 1.2 }}>
-            <div style={{ width: 44, height: 44, color: 'white' }}><Icons.volHoofd /></div>
-            {NL.overwhelmedBtn}
+      {/* ── AGENDA TAB ── */}
+      {tab === 'agenda' && (
+        <AgendaScreen client={client} />
+      )}
+
+      {/* ── STEMMING TAB ── */}
+      {tab === 'stemming' && (
+        <MoodScreen client={client} onBack={() => setTab('taken')} />
+      )}
+
+      {/* ── BOTTOM NAV ── */}
+      <nav className="bottom-nav">
+        {[
+          { id: 'taken',   label: 'Taken' },
+          { id: 'agenda',  label: 'Agenda' },
+          { id: 'stemming',label: 'Stemming' },
+        ].map(t => (
+          <button key={t.id} className={`nav-tab${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}>
+            <TabIcon name={t.id} />
+            {t.label}
           </button>
+        ))}
+      </nav>
 
-          {/* Hulp nodig */}
-          <button onClick={() => setShowHelp(true)}
-            className="btn btn-coral btn-full"
-            style={{ flexDirection: 'column', gap: 8, padding: '14px 10px', borderRadius: 16, fontSize: 15, lineHeight: 1.2 }}>
-            <div style={{ width: 44, height: 44, color: 'white' }}><Icons.hulpNodig /></div>
-            {NL.helpBtn}
-          </button>
-        </div>
-
-        {/* Voice */}
-        {supported && (
-          <button onClick={startListening} className={`btn btn-full ${listening ? 'btn-coral' : 'btn-purple'}`} style={{ marginBottom: 18, fontSize: 16, gap: 10 }}>
-            <span style={{ width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icons.spreken />
-            </span>
-            {listening ? NL.listening : NL.tapToSpeak}
-          </button>
-        )}
-
-        {/* Task title */}
-        <h3 style={{ fontSize: 18, marginBottom: 4 }}>{NL.whatToDo}</h3>
-        <p style={{ fontSize: 15, color: 'var(--text-mid)', fontWeight: 600, marginBottom: 16 }}>{NL.tapATask}</p>
-
-        {/* Task grid with AAC pictograms */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {allTasks.map((task, i) => {
-            const TaskIcon = getIcon(task.id);
-            return (
-              <button key={task.id} onClick={() => openTask(task)}
-                className="pic-btn fade-up"
-                style={{ animationDelay: `${i*40}ms` }}
-                onTouchStart={e => e.currentTarget.style.transform = 'translateY(4px) scale(0.97)'}
-                onTouchEnd={e => e.currentTarget.style.transform = ''}
-              >
-                <div className="pic-wrap">
-                  <TaskIcon />
-                </div>
-                <span>{task.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Help modal */}
+      {/* ── HELP MODAL ── */}
       {showHelp && (
         <div className="modal-overlay">
           <div className="modal-sheet" style={{ textAlign: 'center' }}>
             {helpSent ? (
               <div className="pop">
-                <div style={{ fontSize: 60, marginBottom: 12 }}>📱</div>
-                <h2 style={{ color: 'var(--green-dk)', marginBottom: 8 }}>{NL.helpSent}</h2>
+                <div style={{ fontSize: 52, marginBottom: 12 }}>📱</div>
+                <h2 style={{ color: 'var(--green-dk)', marginBottom: 6 }}>{NL.helpSent}</h2>
               </div>
             ) : (
               <>
-                <div style={{ width: 72, height: 72, margin: '0 auto 16px', color: 'var(--coral-dk)' }}><Icons.hulpNodig /></div>
+                <div style={{ fontSize: 44, marginBottom: 12 }}>🚨</div>
                 <h2 style={{ marginBottom: 8 }}>{NL.helpTitle}</h2>
-                <p style={{ fontSize: 16, color: 'var(--text-mid)', fontWeight: 600, marginBottom: 24 }}>{NL.helpMsg}</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ fontSize: 15, color: 'var(--text-mid)', fontWeight: 600, marginBottom: 22 }}>{NL.helpMsg}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <button className="btn btn-coral btn-full" onClick={sendHelp}>{NL.helpConfirm}</button>
                   <button className="btn btn-ghost btn-full btn-sm" onClick={() => setShowHelp(false)}>{NL.helpCancel}</button>
                 </div>

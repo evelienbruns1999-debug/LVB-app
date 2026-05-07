@@ -215,6 +215,7 @@ export default function AgendaScreen({ client }) {
         {isToday && (() => {
           const now = new Date();
           const hourIdx = now.getHours() - 6;
+          const minPct = now.getMinutes() / 60;
           if (hourIdx < 0 || hourIdx > 16) return null;
           return (
             <div style={{ display: 'flex', alignItems: 'center', gap: 0, margin: '0 0 -8px', position: 'relative', zIndex: 2, pointerEvents: 'none' }}>
@@ -231,7 +232,10 @@ export default function AgendaScreen({ client }) {
           const hasItems = slotEntries.length > 0;
           return (
             <div key={hour} data-hour={idx} style={{ display: 'flex', gap: 0, minHeight: 52, alignItems: 'flex-start' }}>
+              {/* Time label */}
               <div className="agenda-time-col" style={{ paddingTop: 14 }}>{hour}</div>
+
+              {/* Timeline line + entries */}
               <div className={`agenda-line${hasItems ? ' has-item' : ''}${hasItems && slotEntries.every(e => e.done) ? ' done-item' : ''}`}
                 style={{ flex: 1, paddingTop: 8, paddingBottom: 4, marginBottom: 0 }}>
 
@@ -252,6 +256,7 @@ export default function AgendaScreen({ client }) {
                           }}
                           onClick={() => handleToggle(entry)}
                         >
+                          {/* Checkbox */}
                           <div style={{
                             width: 28, height: 28, border: `2px solid ${entry.done ? 'var(--green)' : es.border}`,
                             borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -260,6 +265,7 @@ export default function AgendaScreen({ client }) {
                             {entry.done ? '✓' : ''}
                           </div>
 
+                          {/* Label */}
                           <div style={{ flex: 1 }}>
                             <div style={{
                               fontSize: 15, fontWeight: 700, color: entry.done ? 'var(--green-dk)' : 'var(--text)',
@@ -272,6 +278,7 @@ export default function AgendaScreen({ client }) {
                             )}
                           </div>
 
+                          {/* Type chip */}
                           <span style={{
                             fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 99,
                             background: entry.done ? 'var(--green-lt)' : es.bg,
@@ -282,6 +289,7 @@ export default function AgendaScreen({ client }) {
                             {ENTRY_TYPES.find(t => t.id === (entry.type||'taak'))?.label || 'Taak'}
                           </span>
 
+                          {/* Delete (only editable entries) */}
                           {entry.editable !== false && (
                             <button
                               onClick={e => { e.stopPropagation(); handleDelete(entry.id); }}
@@ -300,6 +308,7 @@ export default function AgendaScreen({ client }) {
           );
         })}
 
+        {/* Empty state */}
         {entries.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px 20px', color: 'var(--text-soft)' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>📅</div>
@@ -309,21 +318,26 @@ export default function AgendaScreen({ client }) {
         )}
       </div>
 
+      {/* ── ADD / EDIT SHEET ── */}
       {showAdd && (
         <div className="modal-overlay">
           <div className="modal-sheet">
             <h3 style={{ marginBottom: 16 }}>{editEntry ? 'Item aanpassen' : 'Item toevoegen'}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+              {/* Time */}
               <div>
                 <label>Tijdstip</label>
                 <input type="time" value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} />
               </div>
 
+              {/* Label */}
               <div>
                 <label>Wat ga je doen?</label>
                 <input type="text" value={form.label} onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="bijv. Ontbijten, Fysiotherapie…" />
               </div>
 
+              {/* Quick-fill from default tasks */}
               <div>
                 <label>Of kies een taak</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
@@ -336,6 +350,7 @@ export default function AgendaScreen({ client }) {
                 </div>
               </div>
 
+              {/* Type */}
               <div>
                 <label>Soort</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
@@ -348,6 +363,7 @@ export default function AgendaScreen({ client }) {
                 </div>
               </div>
 
+              {/* Note */}
               <div>
                 <label>Opmerking (optioneel)</label>
                 <input type="text" value={form.note} onChange={e => setForm(f => ({ ...f, note: e.target.value }))} placeholder="bijv. Niet vergeten…" />

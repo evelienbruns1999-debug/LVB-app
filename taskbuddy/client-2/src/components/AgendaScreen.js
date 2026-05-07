@@ -27,6 +27,12 @@ function getWeek(anchor) {
   return days;
 }
 
+function dayProgressLabel(entries) {
+  if (!entries.length) return 'Nog leeg';
+  const done = entries.filter((entry) => entry.done).length;
+  return `${done}/${entries.length} klaar`;
+}
+
 export default function AgendaScreen({ client }) {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState(today);
@@ -39,6 +45,10 @@ export default function AgendaScreen({ client }) {
 
   const week = getWeek(weekAnchor);
   const isToday = sameDay(selectedDate, today);
+  const weekDays = week.map((day) => ({
+    date: day,
+    entries: loadDayWithMeds(client.id, day),
+  }));
 
   useEffect(() => {
     refresh();
@@ -141,9 +151,8 @@ export default function AgendaScreen({ client }) {
         </div>
 
         {/* Week strip */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 2, paddingBottom: 10, overflowX: 'auto' }}>
-          {week.map((d, i) => {
-            const dayEntries = loadDayWithMeds(client.id, d);
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, paddingBottom: 10 }}>
+          {weekDays.map(({ date: d, entries: dayEntries }, i) => {
             const isSelected = sameDay(d, selectedDate);
             const isTd = sameDay(d, today);
             return (
@@ -155,6 +164,43 @@ export default function AgendaScreen({ client }) {
                 <span className="wd-num">{d.getDate()}</span>
                 <div className="wd-dot" />
               </div>
+            );
+          })}
+        </div>
+
+        {/* Week overview */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingBottom: 12 }}>
+          {weekDays.map(({ date: d, entries: dayEntries }, i) => {
+            const isSelected = sameDay(d, selectedDate);
+            const isTd = sameDay(d, today);
+            return (
+              <button
+                key={`overview-${i}`}
+                onClick={() => setSelectedDate(new Date(d))}
+                className={`week-overview${isSelected ? ' selected' : ''}${isTd ? ' today' : ''}`}
+                style={{ width: '100%' }}
+              >
+                <div style={{ minWidth: 86, textAlign: 'left' }}>
+                  <div className="wo-day">{DAYS_NL[d.getDay()]} {d.getDate()}</div>
+                  <div className="wo-sub">{isTd ? 'Vandaag' : dayProgressLabel(dayEntries)}</div>
+                </div>
+                <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+                  {dayEntries.length > 0 ? (
+                    <div className="wo-preview">
+                      {dayEntries.slice(0, 2).map((entry) => (
+                        <span key={entry.id} className={`wo-chip${entry.done ? ' done' : ''}`}>
+                          {entry.time} {entry.label}
+                        </span>
+                      ))}
+                      {dayEntries.length > 2 && (
+                        <span className="wo-more">+{dayEntries.length - 2} meer</span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="wo-empty">Geen planning</div>
+                  )}
+                </div>
+              </button>
             );
           })}
         </div>

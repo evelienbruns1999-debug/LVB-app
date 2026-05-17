@@ -1,5 +1,4 @@
-const BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
+const BASE = process.env.REACT_APP_API_URL || 'https://taskbuddylvbapp.onrender.com';
 
 // Wake up the Render backend on app start (free tier sleeps after inactivity)
 fetch(`${BASE}/`).catch(() => {});

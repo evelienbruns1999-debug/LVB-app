@@ -1,5 +1,9 @@
 const BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
+
+// Wake up the Render backend on app start (free tier sleeps after inactivity)
+fetch(`${BASE}/`).catch(() => {});
+
 function headers(token) {
   const h = { 'Content-Type': 'application/json' };
   if (token) h.Authorization = `Bearer ${token}`;

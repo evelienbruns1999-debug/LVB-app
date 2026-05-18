@@ -466,8 +466,24 @@ app.put('/api/clients/:id', authMiddleware, (req, res) => {
 });
 
 app.delete('/api/clients/:id', authMiddleware, (req, res) => {
-  q.deleteClient.run(req.params.id, req.user.id);
-  res.json({ ok: true });
+  try {
+    const id = req.params.id;
+    const tx = db.transaction(() => {
+      db.prepare('DELETE FROM task_completions WHERE client_id=?').run(id);
+      db.prepare('DELETE FROM mood_logs WHERE client_id=?').run(id);
+      db.prepare('DELETE FROM custom_tasks WHERE client_id=?').run(id);
+      db.prepare('DELETE FROM goals WHERE client_id=?').run(id);
+      db.prepare('DELETE FROM rewards WHERE client_id=?').run(id);
+      db.prepare('DELETE FROM chat_messages WHERE client_id=?').run(id);
+      db.prepare('DELETE FROM agenda_items WHERE client_id=?').run(id);
+      q.deleteClient.run(id, req.user.id);
+    });
+    tx();
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Delete client failed:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/clients/:id/kiosk-link', authMiddleware, (req, res) => {

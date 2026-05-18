@@ -564,7 +564,7 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
                       {task.icon_image ? <img src={task.icon_image} alt={task.task_name} style={{ width: 46, height: 46, objectFit: 'cover', borderRadius: 12 }} /> : <div style={{ fontSize: 28 }}>{task.icon}</div>}
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 16, fontWeight: 800 }}>{task.task_name}</div>
-                        <div style={{ fontSize: 13, color: 'var(--text-mid)', fontWeight: 600 }}>{JSON.parse(task.steps || '[]').length} stappen • {task.points || 1} punten</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-mid)', fontWeight: 600 }}>{(task.steps || []).length} stappen • {task.points || 1} punten</div>
                       </div>
                     </div>
                   ))}

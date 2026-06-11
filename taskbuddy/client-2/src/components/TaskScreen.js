@@ -35,6 +35,28 @@ function beep() {
   } catch (_) {}
 }
 
+function celebrationChime() {
+  // Short rising 2-tone chime — positive reinforcement
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [659, 988];  // E5, B5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      const start = ctx.currentTime + i * 0.09;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.10, start + 0.02);
+      gain.gain.linearRampToValueAtTime(0, start + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.25);
+    });
+  } catch (_) {}
+}
+
 function TimerCircle({ seconds, totalSeconds }) {
   const pct = totalSeconds ? seconds / totalSeconds : 0;
   const radius = 34;
@@ -76,7 +98,9 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted, adu
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerTotal, setTimerTotal] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [celebrate, setCelebrate] = useState(false);
   const resetTimerRef = useRef(null);
+  const celebrateTimerRef = useRef(null);
   const currentStep = steps[currentIndex];
   const doneCount = steps.filter((step) => step.done).length;
   const pct = steps.length ? Math.round((doneCount / steps.length) * 100) : 0;
@@ -160,13 +184,22 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted, adu
     }).catch(() => {});
   }
 
+  function triggerCelebration() {
+    setCelebrate(true);
+    celebrationChime();
+    clearTimeout(celebrateTimerRef.current);
+    celebrateTimerRef.current = setTimeout(() => setCelebrate(false), 750);
+  }
+
   function completeCurrentStep() {
     recordActivity();
+    triggerCelebration();
     const updated = steps.map((step, index) => (index === currentIndex ? { ...step, done: true } : step));
     setSteps(updated);
     const nextIndex = updated.findIndex((step) => !step.done);
     if (nextIndex === -1) {
-      finishTask(updated);
+      // Slight delay so finish overlay plays after the chime
+      setTimeout(() => finishTask(updated), 350);
       return;
     }
     setCurrentIndex(nextIndex);
@@ -196,6 +229,18 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted, adu
 
   return (
     <div className={flashTimer ? 'timer-flash' : ''} style={{ minHeight: '100vh', paddingBottom: 96 }}>
+      {celebrate && (
+        <div className="micro-celebration" aria-hidden="true">
+          <div className="celebration-burst">
+            <span>⭐</span>
+            <span>✨</span>
+            <span>🎉</span>
+            <span>✨</span>
+            <span>⭐</span>
+          </div>
+          <div className="celebration-plus">+1</div>
+        </div>
+      )}
       {resetMsg && (
         <div className="pop" style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--yellow)', color: 'var(--yellow-dk)', padding: '12px 20px', borderRadius: 14, fontWeight: 800, zIndex: 99 }}>
           {NL.taskResetMsg}

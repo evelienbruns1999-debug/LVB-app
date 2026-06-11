@@ -20,7 +20,7 @@ export default function CaregiverAuth({ onLogin }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+    <div className="caregiver-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
       <div style={{ fontSize: 56, marginBottom: 12 }}>🩺</div>
       <h1 style={{ marginBottom: 4 }}>{NL.caregiverTitle}</h1>
       <p style={{ color: 'var(--text-mid)', fontWeight: 600, fontSize: 16, marginBottom: 32 }}>

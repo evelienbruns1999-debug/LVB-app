@@ -153,7 +153,7 @@ export default function ClientApp({ client, onLogout }) {
   if (screen === 'vol_hoofd') return <OverwhelmedScreen client={client} onBack={goHome} />;
 
   return (
-    <div className={adultMode ? 'adult-mode' : ''} style={{ minHeight: '100vh', paddingBottom: 118, background: 'var(--bg)' }}>
+    <div className={`caregiver-shell ${adultMode ? 'adult-mode' : ''}`} style={{ minHeight: '100vh', paddingBottom: 118 }}>
       <MedReminder clientId={client.id} />
 
       <div className="sticky-header" style={{ padding: '10px 16px 8px' }}>

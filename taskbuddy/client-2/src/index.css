@@ -23,9 +23,9 @@
   --orange-lt: #FEF3E8;
 
   /* Layout */
-  --bg:        #F7F7F5;
+  --bg:        #EEECDE;
   --surface:   #FFFFFF;
-  --border:    #E4E1F0;
+  --border:    #DCD8C8;
   --text:      #1A1A2E;
   --text-mid:  #4A4A6A;
   --text-soft: #9090AA;
@@ -648,15 +648,30 @@ label {
   box-shadow: var(--cg-shadow-md);
 }
 
-.caregiver-shell .dashboard-tile[data-tile="clients"]   { background: linear-gradient(135deg, #B2DCFA 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="tasks"]     { background: linear-gradient(135deg, #E0FE9C 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="goals"]     { background: linear-gradient(135deg, #F0CDFF 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="rewards"]   { background: linear-gradient(135deg, #FFD3C2 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="chat"]      { background: linear-gradient(135deg, #B2DCFA 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="med"]       { background: linear-gradient(135deg, #E0A9C2 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="volhoofd"]  { background: linear-gradient(135deg, #F0CDFF 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="duty"]      { background: linear-gradient(135deg, #80A599 0%, #FFFFFF 70%); }
-.caregiver-shell .dashboard-tile[data-tile="settings"]  { background: var(--cg-surface); }
+/* Solid pastel tiles (no gradients) — colored top stripe accent */
+.caregiver-shell .dashboard-tile {
+  overflow: hidden;
+}
+.caregiver-shell .dashboard-tile::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 6px;
+  background: var(--tile-accent, var(--cg-primary));
+}
+
+.caregiver-shell .dashboard-tile[data-tile="clients"]   { background: #B2DCFA; --tile-accent: #7FA4C6; }
+.caregiver-shell .dashboard-tile[data-tile="tasks"]     { background: #E0FE9C; --tile-accent: #80A599; }
+.caregiver-shell .dashboard-tile[data-tile="goals"]     { background: #F0CDFF; --tile-accent: #C49AD4; }
+.caregiver-shell .dashboard-tile[data-tile="rewards"]   { background: #FFD3C2; --tile-accent: #E0805A; }
+.caregiver-shell .dashboard-tile[data-tile="chat"]      { background: #EEECDE; --tile-accent: #16645F; }
+.caregiver-shell .dashboard-tile[data-tile="med"]       { background: #E0A9C2; --tile-accent: #ED83AC; }
+.caregiver-shell .dashboard-tile[data-tile="volhoofd"]  { background: #F0CDFF; --tile-accent: #C49AD4; }
+.caregiver-shell .dashboard-tile[data-tile="duty"]      { background: #80A599; --tile-accent: #16645F; }
+.caregiver-shell .dashboard-tile[data-tile="settings"]  { background: var(--cg-surface); --tile-accent: var(--cg-primary-lt); }
+
+.caregiver-shell .dashboard-tile[data-tile="duty"] { color: var(--cg-primary-dk); }
+.caregiver-shell .dashboard-tile[data-tile="duty"] .tile-subtitle { color: var(--cg-primary-dk); opacity: 0.85; }
 
 .caregiver-shell .tile-badge {
   position: absolute;

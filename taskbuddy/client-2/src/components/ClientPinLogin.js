@@ -45,7 +45,7 @@ export default function ClientPinLogin({ onSelect }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28, textAlign: 'center' }}>
+    <div className="caregiver-shell" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28, textAlign: 'center' }}>
       <div style={{ fontSize: 64, marginBottom: 10 }}>🌟</div>
       <h1 style={{ marginBottom: 4 }}>{NL.appName}</h1>
       <p style={{ fontSize: 16, color: 'var(--text-mid)', fontWeight: 600, marginBottom: 36 }}>{NL.enterPin}</p>

@@ -75,11 +75,12 @@ async function imageToSquareBase64(file) {
   return canvas.toDataURL('image/jpeg', 0.86);
 }
 
-function Tile({ title, icon, badge, onClick }) {
+function Tile({ title, icon, badge, onClick, tile, subtitle }) {
   return (
-    <button type="button" onClick={onClick} className="dashboard-tile">
-      <div style={{ fontSize: 34, marginBottom: 8 }}>{icon}</div>
-      <div style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
+    <button type="button" onClick={onClick} className="dashboard-tile" data-tile={tile}>
+      <div style={{ fontSize: 32, marginBottom: 6 }}>{icon}</div>
+      <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.005em' }}>{title}</div>
+      {subtitle ? <div className="tile-subtitle">{subtitle}</div> : null}
       {badge ? <div className="tile-badge">{badge}</div> : null}
     </button>
   );
@@ -382,32 +383,58 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
   const clientTilesBadge = helpRequests.length ? helpRequests.length : null;
   const chatBadge = Object.values(chatUnreadByClient).reduce((sum, count) => sum + count, 0) || null;
 
+  const currentDutyName = useMemo(() => {
+    if (!selected) return '';
+    const list = duty[selected.id] || [];
+    const hour = new Date().getHours();
+    const part = hour < 12 ? 'ochtend' : hour < 18 ? 'middag' : 'avond';
+    return list.find((item) => item.daypart === part)?.caregiver_name || '';
+  }, [duty, selected]);
+
   return (
-    <div style={{ minHeight: '100vh', paddingBottom: 40 }}>
+    <div className="caregiver-shell" style={{ minHeight: '100vh', paddingBottom: 40 }}>
       {message ? (
-        <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 40, background: 'var(--green)', color: '#fff', padding: '10px 14px', borderRadius: 12, fontWeight: 800 }}>
+        <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 40, background: 'var(--cg-primary)', color: '#fff', padding: '10px 14px', borderRadius: 12, fontWeight: 800 }}>
           {message}
         </div>
       ) : null}
 
       {view === 'menu' && (
         <>
-          <div className="sticky-header" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="sticky-header" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <p style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Begeleider</p>
-              <h2 style={{ fontSize: 20 }}>{caregiver.name}</h2>
+              <p style={{ fontSize: 11, color: 'var(--cg-text-soft)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Begeleider</p>
+              <h2 style={{ fontSize: 22 }}>{caregiver.name}</h2>
             </div>
             <button type="button" className="btn btn-ghost btn-sm" onClick={onLogout}>{NL.signOut}</button>
           </div>
 
-          <div style={{ padding: '16px' }}>
+          <div style={{ padding: '14px 16px 8px' }}>
+            {selected && (
+              <div className="card" style={{ marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button type="button" onClick={() => setView('clients')} style={{ width: 44, height: 44, borderRadius: '50%', background: selected.avatar_color, border: 'none', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 11, color: 'var(--cg-text-soft)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Actieve cliënt</p>
+                  <div style={{ fontSize: 17, fontWeight: 800 }}>{selected.name}</div>
+                </div>
+                {clients.length > 1 && (
+                  <select value={selectedId || ''} onChange={(e) => setSelectedId(Number(e.target.value))} style={{ maxWidth: 130, fontSize: 13 }}>
+                    {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                )}
+              </div>
+            )}
+
             <div className="dashboard-grid">
-              <Tile title={NL.tileClients} icon="👥" badge={clientTilesBadge} onClick={() => setView('clients')} />
-              <Tile title={NL.tileTasks} icon="✅" onClick={() => setView('tasks')} />
-              <Tile title={NL.tileGoals} icon="🎯" onClick={() => setView('goals')} />
-              <Tile title={NL.tileRewards} icon="🏆" onClick={() => setView('rewards')} />
-              <Tile title={NL.tileChat} icon="💬" badge={chatBadge} onClick={() => setView('chat')} />
-              <Tile title={NL.tileSettings} icon="⚙️" onClick={() => setView('settings')} />
+              <Tile tile="clients"  title={NL.tileClients}   icon="👥" badge={clientTilesBadge} onClick={() => setView('clients')} />
+              <Tile tile="tasks"    title={NL.tileTasks}     icon="✅" onClick={() => setView('tasks')} />
+              <Tile tile="goals"    title={NL.tileGoals}     icon="🎯" onClick={() => setView('goals')} />
+              <Tile tile="rewards"  title={NL.tileRewards}   icon="🏆" onClick={() => setView('rewards')} />
+              <Tile tile="chat"     title={NL.tileChat}      icon="💬" badge={chatBadge} onClick={() => setView('chat')} />
+              <Tile tile="med"      title={NL.tileMed}       icon="💊" onClick={() => setView('medicijnen')} />
+              <Tile tile="volhoofd" title={NL.tileOverwhelm} icon="🧠" onClick={() => setView('volhoofd')} />
+              <Tile tile="duty"     title={NL.tileDuty}      icon="👤" subtitle={currentDutyName || NL.dutyEmpty} onClick={() => setView('duty')} />
+              <Tile tile="settings" title={NL.tileSettings}  icon="⚙️" onClick={() => setView('settings')} />
             </div>
           </div>
         </>
@@ -666,11 +693,120 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
         </>
       )}
 
+      {view === 'medicijnen' && selected && (
+        <>
+          <BackHeader title={NL.tileMed} onBack={() => setView('menu')} />
+          <div style={{ padding: '16px' }}>
+            <div className="card" style={{ marginBottom: 14 }}>
+              <h3 style={{ marginBottom: 6 }}>{NL.medManageTitle}</h3>
+              <p style={{ fontSize: 13, color: 'var(--cg-text-mid)', fontWeight: 600, marginBottom: 14 }}>{NL.medManageIntro}</p>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 8 }}>
+                  <input type="time" value={newMedTime.time} onChange={(e) => setNewMedTime((prev) => ({ ...prev, time: e.target.value }))} />
+                  <input value={newMedTime.name} onChange={(e) => setNewMedTime((prev) => ({ ...prev, name: e.target.value }))} placeholder="Naam medicijn" />
+                  <button type="button" className="btn btn-green btn-sm" onClick={addMedTime}>+</button>
+                </div>
+                {medTimes.map((item) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'var(--cg-bg-soft)', borderRadius: 10 }}>
+                    <div style={{ fontWeight: 700 }}>💊 {item.time} <span style={{ color: 'var(--cg-text-mid)', fontWeight: 600 }}>· {item.name}</span></div>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeMedTime(item.id)}>×</button>
+                  </div>
+                ))}
+                {medTimes.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--cg-text-soft)', fontWeight: 600 }}>
+                    Nog geen medicijnmomenten ingesteld.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {view === 'volhoofd' && selected && (
+        <>
+          <BackHeader title={NL.tileOverwhelm} onBack={() => setView('menu')} />
+          <div style={{ padding: '16px' }}>
+            <div className="card" style={{ marginBottom: 14 }}>
+              <h3 style={{ marginBottom: 6 }}>{NL.overwhelmStatsTitle}</h3>
+              <div className="stat-row" style={{ marginTop: 10 }}>
+                <div className="stat-box">
+                  <div className="stat-value">{statsByClient[selected.id]?.overwhelmToday ?? 0}</div>
+                  <div className="stat-label">{NL.overwhelmCountToday}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-value">{statsByClient[selected.id]?.overwhelmWeek ?? 0}</div>
+                  <div className="stat-label">{NL.overwhelmCountWeek}</div>
+                </div>
+              </div>
+              {!(statsByClient[selected.id]?.overwhelmWeek) && (
+                <p style={{ fontSize: 13, color: 'var(--cg-text-soft)', fontWeight: 600, marginTop: 10 }}>{NL.overwhelmNoData}</p>
+              )}
+            </div>
+
+            <div className="card">
+              <h3 style={{ marginBottom: 6 }}>{NL.overwhelmManageTitle}</h3>
+              <p style={{ fontSize: 13, color: 'var(--cg-text-mid)', fontWeight: 600, marginBottom: 14 }}>{NL.overwhelmManageIntro}</p>
+              <div style={{ display: 'grid', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr auto', gap: 8 }}>
+                  <input value={newAct.icon} onChange={(e) => setNewAct((prev) => ({ ...prev, icon: e.target.value }))} placeholder="🧘" />
+                  <input value={newAct.name} onChange={(e) => setNewAct((prev) => ({ ...prev, name: e.target.value }))} placeholder="Naam activiteit" />
+                  <button type="button" className="btn btn-green btn-sm" onClick={addActivity}>+</button>
+                </div>
+                {overwhelmedActs.map((item) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', background: 'var(--cg-bg-soft)', borderRadius: 10 }}>
+                    <div style={{ fontWeight: 700 }}>{item.icon} {item.name}</div>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeActivity(item.id)}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {view === 'duty' && selected && (
+        <>
+          <BackHeader title={NL.tileDuty} onBack={() => setView('menu')} />
+          <div style={{ padding: '16px' }}>
+            <div className="card" style={{ marginBottom: 14, background: 'linear-gradient(135deg, #80A599 0%, #E0FE9C 100%)', border: '1px solid var(--cg-primary-lt)' }}>
+              <p style={{ fontSize: 11, color: 'var(--cg-primary-dk)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Nu op dienst</p>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 26, color: 'var(--cg-primary-dk)', fontWeight: 700 }}>
+                {currentDutyName || NL.dutyEmpty}
+              </div>
+            </div>
+
+            <div className="card" style={{ marginBottom: 14 }}>
+              <h3 style={{ marginBottom: 6 }}>{NL.dutyTitle}</h3>
+              <p style={{ fontSize: 13, color: 'var(--cg-text-mid)', fontWeight: 600, marginBottom: 14 }}>{NL.dutyIntro}</p>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {DAYPARTS.map((daypart) => {
+                  const existing = (duty[selected.id] || []).find((item) => item.daypart === daypart.id) || { caregiver_name: '', caregiver_avatar: '' };
+                  return (
+                    <div key={daypart.id} style={{ padding: '12px', background: 'var(--cg-bg-soft)', borderRadius: 12 }}>
+                      <div style={{ fontWeight: 800, marginBottom: 8, color: 'var(--cg-primary-dk)' }}>{daypart.label}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8 }}>
+                        <input defaultValue={existing.caregiver_name} placeholder="Naam begeleider" onBlur={(e) => saveDutySlot(daypart.id, { caregiver_name: e.target.value, caregiver_avatar: existing.caregiver_avatar })} />
+                        <input defaultValue={existing.caregiver_avatar} placeholder="🧑" onBlur={(e) => saveDutySlot(daypart.id, { caregiver_name: existing.caregiver_name || caregiver.name, caregiver_avatar: e.target.value })} />
+                      </div>
+                    </div>
+                  );
+                })}
+                <button type="button" className="btn btn-green" onClick={() => saveDutySlot(
+                  new Date().getHours() < 12 ? 'ochtend' : new Date().getHours() < 18 ? 'middag' : 'avond',
+                  { caregiver_name: caregiver.name, caregiver_avatar: '🧑‍⚕️' }
+                )}>{NL.dutyTakeOver}</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {view === 'settings' && selected && (
         <>
           <BackHeader title={NL.tileSettings} onBack={() => setView('menu')} />
           <div style={{ padding: '16px' }}>
-            <div className="card" style={{ marginBottom: 14 }}>
+            <div className="card">
               <h3 style={{ marginBottom: 10 }}>{selected.name}</h3>
               <div style={{ display: 'grid', gap: 10 }}>
                 <input value={selected.name} onChange={(e) => setClients((prev) => prev.map((client) => (client.id === selected.id ? { ...client, name: e.target.value } : client)))} />
@@ -682,59 +818,7 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
                 </select>
                 <button type="button" className="btn btn-green" onClick={saveSelectedClient}>{NL.saveClient}</button>
                 <button type="button" className="btn btn-ghost" onClick={generateKioskLink}>{NL.kioskLink}</button>
-                {kioskLink ? <div style={{ fontSize: 13, color: 'var(--text-mid)', fontWeight: 700, wordBreak: 'break-all' }}>{kioskLink}</div> : null}
-              </div>
-            </div>
-
-            <div className="card" style={{ marginBottom: 14 }}>
-              <h3 style={{ marginBottom: 10 }}>{NL.dutyTitle}</h3>
-              <div style={{ display: 'grid', gap: 10 }}>
-                {DAYPARTS.map((daypart) => {
-                  const existing = (duty[selected.id] || []).find((item) => item.daypart === daypart.id) || { caregiver_name: '', caregiver_avatar: '' };
-                  return (
-                    <div key={daypart.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ fontWeight: 800, marginBottom: 6 }}>{daypart.label}</div>
-                      <div style={{ display: 'grid', gap: 8 }}>
-                        <input defaultValue={existing.caregiver_name} placeholder="Naam begeleider" onBlur={(e) => saveDutySlot(daypart.id, { caregiver_name: e.target.value, caregiver_avatar: existing.caregiver_avatar })} />
-                        <input defaultValue={existing.caregiver_avatar} placeholder="Avatar of emoji" onBlur={(e) => saveDutySlot(daypart.id, { caregiver_name: existing.caregiver_name || caregiver.name, caregiver_avatar: e.target.value })} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="card" style={{ marginBottom: 14 }}>
-              <h3 style={{ marginBottom: 10 }}>Medicijnen</h3>
-              <div style={{ display: 'grid', gap: 10 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr auto', gap: 8 }}>
-                  <input type="time" value={newMedTime.time} onChange={(e) => setNewMedTime((prev) => ({ ...prev, time: e.target.value }))} />
-                  <input value={newMedTime.name} onChange={(e) => setNewMedTime((prev) => ({ ...prev, name: e.target.value }))} placeholder="Naam medicijn" />
-                  <button type="button" className="btn btn-green btn-sm" onClick={addMedTime}>+</button>
-                </div>
-                {medTimes.map((item) => (
-                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>{item.time} {item.name}</div>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeMedTime(item.id)}>×</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="card">
-              <h3 style={{ marginBottom: 10 }}>Vol hoofd activiteiten</h3>
-              <div style={{ display: 'grid', gap: 10 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr auto', gap: 8 }}>
-                  <input value={newAct.icon} onChange={(e) => setNewAct((prev) => ({ ...prev, icon: e.target.value }))} />
-                  <input value={newAct.name} onChange={(e) => setNewAct((prev) => ({ ...prev, name: e.target.value }))} placeholder="Naam activiteit" />
-                  <button type="button" className="btn btn-green btn-sm" onClick={addActivity}>+</button>
-                </div>
-                {overwhelmedActs.map((item) => (
-                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>{item.icon} {item.name}</div>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeActivity(item.id)}>×</button>
-                  </div>
-                ))}
+                {kioskLink ? <div style={{ fontSize: 13, color: 'var(--cg-text-mid)', fontWeight: 700, wordBreak: 'break-all' }}>{kioskLink}</div> : null}
               </div>
             </div>
           </div>

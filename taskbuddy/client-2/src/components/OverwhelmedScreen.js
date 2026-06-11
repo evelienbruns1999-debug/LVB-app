@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NL } from '../nl';
 import { speak } from '../hooks/useVoice';
+import { api } from '../api';
 
 const DEFAULT_ACTIVITIES = [
   { id: 1, icon: '🫁', name: 'Diep ademhalen', steps: ['Adem langzaam in door je neus (tel tot 4)', 'Houd even vast (tel tot 2)', 'Adem langzaam uit door je mond (tel tot 6)', 'Doe dit 3 keer'] },
@@ -19,6 +20,15 @@ export function saveOverwhelmedActivities(clientId, acts) {
 export default function OverwhelmedScreen({ client, onBack }) {
   const [active, setActive] = useState(null);
   const activities = getOverwhelmedActivities(client.id);
+
+  useEffect(() => {
+    // Log overwhelm event for caregiver statistics
+    api.sendHelpRequest({
+      client_id: client.id,
+      reason: 'Cliënt opende vol hoofd scherm',
+      kind: 'overwhelm',
+    }).catch(() => {});
+  }, [client.id]);
 
   function start(act) {
     setActive(act);

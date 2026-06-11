@@ -837,6 +837,8 @@ app.get('/api/stats/:client_id', authMiddleware, (req, res) => {
   const cid = req.params.client_id;
   const goals = attachGoalSteps(q.goalsForClient.all(cid));
   const activeGoal = goals.find((goal) => goal.status === 'active') || null;
+  const overwhelmToday = db.prepare("SELECT COUNT(*) as c FROM help_requests WHERE client_id=? AND kind='overwhelm' AND date(created_at)=date('now')").get(cid).c;
+  const overwhelmWeek = db.prepare("SELECT COUNT(*) as c FROM help_requests WHERE client_id=? AND kind='overwhelm' AND created_at >= datetime('now','-7 days')").get(cid).c;
   res.json({
     totalCompletions: q.totalCompletions.get(cid).c,
     todayCompletions: q.todayCompletions.get(cid).c,
@@ -848,6 +850,8 @@ app.get('/api/stats/:client_id', authMiddleware, (req, res) => {
     unreadChat: q.unreadChatCount.get(cid).c,
     activeGoal,
     rewards: q.rewardsForClient.all(cid).filter((reward) => reward.active),
+    overwhelmToday,
+    overwhelmWeek,
   });
 });
 

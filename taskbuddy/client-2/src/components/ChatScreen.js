@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { NL } from '../nl';
+import { useVoice } from '../hooks/useVoice';
 
 function formatTime(value) {
   return new Date(value).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
@@ -9,6 +10,11 @@ function formatTime(value) {
 export default function ChatScreen({ client, role = 'client', caregiverName = 'Begeleider' }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
+  const handleVoice = useCallback((transcript) => {
+    if (!transcript) return;
+    setText((current) => (current ? `${current} ${transcript}` : transcript));
+  }, []);
+  const { listening, supported, startListening } = useVoice(handleVoice);
 
   useEffect(() => {
     loadChat();
@@ -76,17 +82,32 @@ export default function ChatScreen({ client, role = 'client', caregiverName = 'B
         </div>
       </div>
 
-      <div className="card" style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+      <div className="card" style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
         <textarea
           rows={2}
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder={NL.chatPlaceholder}
-          style={{ flex: 1, minHeight: 52 }}
+          style={{ flex: '1 1 100%', minHeight: 52 }}
         />
-        <button type="button" className="btn btn-green" onClick={sendMessage}>
-          {NL.send}
-        </button>
+        <div style={{ display: 'flex', gap: 8, width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+          {supported ? (
+            <button
+              type="button"
+              className={`btn-voice-mic${listening ? ' recording' : ''}`}
+              onClick={startListening}
+              aria-label={NL.recordVoice}
+            >
+              <span style={{ fontSize: 18 }}>🎙️</span>
+              {listening ? NL.recordingVoice : NL.recordVoice}
+            </button>
+          ) : (
+            <span style={{ fontSize: 12, color: 'var(--text-soft)', fontWeight: 700 }}>{NL.voiceNotSupported}</span>
+          )}
+          <button type="button" className="btn btn-green" onClick={sendMessage} disabled={!text.trim()}>
+            {NL.send}
+          </button>
+        </div>
       </div>
     </div>
   );

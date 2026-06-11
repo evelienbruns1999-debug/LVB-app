@@ -18,13 +18,21 @@ function getStage(steps) {
   return stage;
 }
 
-export default function GrowingTree({ steps = 0, compact = false }) {
+// Positions where earned rewards hang from the tree branches
+const REWARD_SPOTS = [
+  { x: 30, y: 50 }, { x: 90, y: 50 }, { x: 60, y: 30 },
+  { x: 22, y: 78 }, { x: 98, y: 78 }, { x: 60, y: 84 },
+  { x: 45, y: 28 }, { x: 75, y: 28 },
+];
+
+export default function GrowingTree({ steps = 0, compact = false, earnedRewards = [] }) {
   const stage = getStage(steps);
   const stageIndex = STAGES.findIndex((item) => item.min === stage.min);
   const level = stageIndex;
   const color = stage.color;
   const width = compact ? 54 : 120;
   const height = compact ? 58 : 130;
+  const showRewards = !compact && earnedRewards.length > 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: compact ? 2 : 6 }}>
@@ -113,6 +121,16 @@ export default function GrowingTree({ steps = 0, compact = false }) {
             <ellipse cx="60" cy="93" rx="8" ry="10" fill="#A8E6A3" opacity="0.7" />
           </g>
         )}
+
+        {showRewards && earnedRewards.slice(0, REWARD_SPOTS.length).map((reward, i) => {
+          const spot = REWARD_SPOTS[i];
+          return (
+            <g key={reward.id} style={{ animation: `pop 0.45s ${0.08 * i + 0.2}s ease both` }}>
+              <circle cx={spot.x} cy={spot.y} r="11" fill="#FFD23F" opacity="0.95" />
+              <text x={spot.x} y={spot.y + 5} fontSize="14" textAnchor="middle">🎁</text>
+            </g>
+          );
+        })}
       </svg>
 
       <div style={{ fontFamily: 'var(--font-head)', fontSize: compact ? 12 : 16, fontWeight: 600, color }}>

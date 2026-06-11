@@ -102,7 +102,7 @@ export default function ClientApp({ client, onLogout }) {
     }
   }, [allTasks]);
 
-  const { listening, supported, startListening } = useVoice(handleVoiceResult);
+  const { listening, supported, error: voiceError, startListening, clearError } = useVoice(handleVoiceResult);
 
   function openTask(task) {
     if (task.special === 'stemming') {
@@ -190,15 +190,22 @@ export default function ClientApp({ client, onLogout }) {
           </div>
 
           {supported && (
-            <button
-              type="button"
-              onClick={startListening}
-              className={`btn btn-full ${listening ? 'btn-coral' : 'btn-ghost'}`}
-              style={{ marginBottom: 12, fontSize: 15, gap: 8, border: listening ? 'none' : '1.5px solid var(--purple)', color: listening ? '#fff' : 'var(--purple)' }}
-            >
-              <span style={{ fontSize: 18 }}>🎙️</span>
-              {listening ? NL.listening : NL.tapToSpeak}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={startListening}
+                className={`btn btn-full ${listening ? 'btn-coral' : 'btn-ghost'}`}
+                style={{ marginBottom: voiceError ? 6 : 12, fontSize: 15, gap: 8, border: listening ? 'none' : '1.5px solid var(--purple)', color: listening ? '#fff' : 'var(--purple)' }}
+              >
+                <span style={{ fontSize: 18 }}>🎙️</span>
+                {listening ? NL.listening : NL.tapToSpeak}
+              </button>
+              {voiceError && (
+                <div onClick={clearError} style={{ marginBottom: 12, background: 'var(--coral-lt)', color: 'var(--coral-dk)', border: '1.5px solid var(--coral)', padding: '8px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  ⚠️ {voiceError}
+                </div>
+              )}
+            </>
           )}
 
           <h3 style={{ marginBottom: 10 }}>{NL.whatToDo}</h3>

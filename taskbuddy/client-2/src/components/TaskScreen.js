@@ -218,7 +218,7 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted, adu
     }
   }, [currentStep, currentIndex, steps]);
 
-  const { listening, supported, startListening } = useVoice(handleVoice);
+  const { listening, supported, error: voiceError, startListening, clearError } = useVoice(handleVoice);
 
   const completedSteps = useMemo(
     () => steps.filter((step) => step.done).map((step) => step.title),
@@ -268,14 +268,21 @@ export default function TaskScreen({ task, client, onBack, onStepsCompleted, adu
         </div>
 
         {supported && !finished && (
-          <button
-            type="button"
-            onClick={() => { startListening(); recordActivity(); }}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: listening ? 'var(--coral-lt)' : 'var(--purple-lt)', border: `2px solid ${listening ? 'var(--coral)' : 'var(--purple)'}`, borderRadius: 12, padding: '11px 16px', marginBottom: 14, cursor: 'pointer', fontSize: 14, fontWeight: 800, color: listening ? 'var(--coral-dk)' : 'var(--purple-dk)', fontFamily: 'var(--font-body)' }}
-          >
-            <span style={{ fontSize: 18 }}>🎙️</span>
-            {listening ? NL.voiceListening : NL.voiceHint}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => { startListening(); recordActivity(); }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: listening ? 'var(--coral-lt)' : 'var(--purple-lt)', border: `2px solid ${listening ? 'var(--coral)' : 'var(--purple)'}`, borderRadius: 12, padding: '11px 16px', marginBottom: voiceError ? 6 : 14, cursor: 'pointer', fontSize: 14, fontWeight: 800, color: listening ? 'var(--coral-dk)' : 'var(--purple-dk)', fontFamily: 'var(--font-body)' }}
+            >
+              <span style={{ fontSize: 18 }}>🎙️</span>
+              {listening ? NL.voiceListening : NL.voiceHint}
+            </button>
+            {voiceError && (
+              <div onClick={clearError} style={{ marginBottom: 14, background: 'var(--coral-lt)', color: 'var(--coral-dk)', border: '1.5px solid var(--coral)', padding: '8px 12px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                ⚠️ {voiceError}
+              </div>
+            )}
+          </>
         )}
 
         {!finished && currentStep && (

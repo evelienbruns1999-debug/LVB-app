@@ -14,7 +14,7 @@ export default function ChatScreen({ client, role = 'client', caregiverName = 'B
     if (!transcript) return;
     setText((current) => (current ? `${current} ${transcript}` : transcript));
   }, []);
-  const { listening, supported, startListening } = useVoice(handleVoice);
+  const { listening, supported, error: voiceError, startListening, clearError } = useVoice(handleVoice);
 
   useEffect(() => {
     loadChat();
@@ -87,9 +87,15 @@ export default function ChatScreen({ client, role = 'client', caregiverName = 'B
           rows={2}
           value={text}
           onChange={(event) => setText(event.target.value)}
+          onFocus={clearError}
           placeholder={NL.chatPlaceholder}
           style={{ flex: '1 1 100%', minHeight: 52 }}
         />
+        {voiceError ? (
+          <div style={{ width: '100%', background: 'var(--coral-lt)', color: 'var(--coral-dk)', border: '1.5px solid var(--coral)', padding: '8px 12px', borderRadius: 10, fontSize: 12.5, fontWeight: 700 }}>
+            ⚠️ {voiceError}
+          </div>
+        ) : null}
         <div style={{ display: 'flex', gap: 8, width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
           {supported ? (
             <button

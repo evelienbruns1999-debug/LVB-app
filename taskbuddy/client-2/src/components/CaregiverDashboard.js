@@ -434,6 +434,7 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
               <Tile tile="med"      title={NL.tileMed}       icon="💊" onClick={() => setView('medicijnen')} />
               <Tile tile="volhoofd" title={NL.tileOverwhelm} icon="🧠" onClick={() => setView('volhoofd')} />
               <Tile tile="duty"     title={NL.tileDuty}      icon="👤" subtitle={currentDutyName || NL.dutyEmpty} onClick={() => setView('duty')} />
+              <Tile tile="report"   title={NL.tileReport}    icon="📋" onClick={() => setView('rapportage')} />
               <Tile tile="settings" title={NL.tileSettings}  icon="⚙️" onClick={() => setView('settings')} />
             </div>
           </div>
@@ -796,6 +797,38 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
                   new Date().getHours() < 12 ? 'ochtend' : new Date().getHours() < 18 ? 'middag' : 'avond',
                   { caregiver_name: caregiver.name, caregiver_avatar: '🧑‍⚕️' }
                 )}>{NL.dutyTakeOver}</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {view === 'rapportage' && selected && (
+        <>
+          <BackHeader title={NL.tileReport} onBack={() => setView('menu')} />
+          <div style={{ padding: '16px' }}>
+            <div className="card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                <h3>{NL.reportTitle} · {selected.name}</h3>
+                <button type="button" className="btn btn-green" onClick={() => generateReport(selected.id)}>
+                  ✨ {NL.reportGenerate}
+                </button>
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--cg-text-mid)', fontWeight: 600, marginBottom: 12 }}>{NL.reportIntro}</p>
+              <textarea
+                rows={10}
+                value={reportByClient[selected.id] || ''}
+                onChange={(e) => setReportByClient((prev) => ({ ...prev, [selected.id]: e.target.value }))}
+                placeholder={NL.reportPlaceholder}
+                style={{ width: '100%' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12, gap: 8 }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReportByClient((prev) => ({ ...prev, [selected.id]: '' }))}>
+                  Wissen
+                </button>
+                <button type="button" className="btn btn-green btn-sm" onClick={() => exportReportPdf(selected.id)} disabled={!reportByClient[selected.id]}>
+                  📄 {NL.reportExport}
+                </button>
               </div>
             </div>
           </div>

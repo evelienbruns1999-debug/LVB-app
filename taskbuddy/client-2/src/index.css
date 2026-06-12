@@ -668,6 +668,7 @@ label {
 .caregiver-shell .dashboard-tile[data-tile="med"]       { background: #E0A9C2; --tile-accent: #ED83AC; }
 .caregiver-shell .dashboard-tile[data-tile="volhoofd"]  { background: #F0CDFF; --tile-accent: #C49AD4; }
 .caregiver-shell .dashboard-tile[data-tile="duty"]      { background: #80A599; --tile-accent: #16645F; }
+.caregiver-shell .dashboard-tile[data-tile="report"]    { background: #FFD3C2; --tile-accent: #E0805A; }
 .caregiver-shell .dashboard-tile[data-tile="settings"]  { background: var(--cg-surface); --tile-accent: var(--cg-primary-lt); }
 
 .caregiver-shell .dashboard-tile[data-tile="duty"] { color: var(--cg-primary-dk); }

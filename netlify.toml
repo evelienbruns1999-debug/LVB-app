@@ -1,0 +1,13 @@
+[build]
+  base = "taskbuddy/client-2"
+  command = "npm install && npm run build"
+  publish = "build"
+
+[build.environment]
+  NPM_FLAGS = "--legacy-peer-deps"
+  CI = "false"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

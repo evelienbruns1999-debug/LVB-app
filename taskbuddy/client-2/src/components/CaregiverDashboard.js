@@ -98,6 +98,21 @@ function BackHeader({ title, onBack, right }) {
   );
 }
 
+function EmptyNoClient({ onGoToClients }) {
+  return (
+    <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+      <div style={{ fontSize: 56, marginBottom: 14 }}>👥</div>
+      <h3 style={{ marginBottom: 8, color: 'var(--cg-primary-dk)' }}>Nog geen cliënt</h3>
+      <p style={{ fontSize: 14, color: 'var(--cg-text-mid)', fontWeight: 600, marginBottom: 22 }}>
+        Voeg eerst een cliënt toe om deze functie te kunnen gebruiken.
+      </p>
+      <button type="button" className="btn btn-green" onClick={onGoToClients}>
+        + Nieuwe cliënt
+      </button>
+    </div>
+  );
+}
+
 export default function CaregiverDashboard({ caregiver, token, onLogout }) {
   const [view, setView] = useState('menu');
   const [clients, setClients] = useState([]);
@@ -383,6 +398,20 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
   const clientTilesBadge = helpRequests.length ? helpRequests.length : null;
   const chatBadge = Object.values(chatUnreadByClient).reduce((sum, count) => sum + count, 0) || null;
 
+  const VIEW_TITLES = {
+    tasks: NL.tileTasks,
+    goals: NL.tileGoals,
+    rewards: NL.tileRewards,
+    chat: NL.tileChat,
+    medicijnen: NL.tileMed,
+    volhoofd: NL.tileOverwhelm,
+    duty: NL.tileDuty,
+    rapportage: NL.tileReport,
+    settings: NL.tileSettings,
+  };
+  const viewNeedsClient = view in VIEW_TITLES;
+  const showEmptyClientState = viewNeedsClient && !selected;
+
   const currentDutyName = useMemo(() => {
     if (!selected) return '';
     const list = duty[selected.id] || [];
@@ -441,6 +470,13 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
         </>
       )}
 
+      {showEmptyClientState && (
+        <>
+          <BackHeader title={VIEW_TITLES[view]} onBack={() => setView('menu')} />
+          <EmptyNoClient onGoToClients={() => setView('clients')} />
+        </>
+      )}
+
       {view === 'clients' && (
         <>
           <BackHeader title={NL.tileClients} onBack={() => setView('menu')} />
@@ -448,9 +484,37 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
             <div className="card" style={{ marginBottom: 14 }}>
               <h3 style={{ marginBottom: 10 }}>{NL.newClient}</h3>
               <div style={{ display: 'grid', gap: 10 }}>
-                <input value={newClient.name} onChange={(e) => setNewClient((prev) => ({ ...prev, name: e.target.value }))} placeholder={NL.clientName} />
-                <input value={newClient.pin} onChange={(e) => setNewClient((prev) => ({ ...prev, pin: e.target.value }))} placeholder={NL.pinPH} />
-                <textarea value={newClient.notes} onChange={(e) => setNewClient((prev) => ({ ...prev, notes: e.target.value }))} placeholder={NL.notesPH} rows={3} />
+                <input
+                  type="text"
+                  value={newClient.name}
+                  onChange={(e) => setNewClient((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder={NL.clientName}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={newClient.pin}
+                  onChange={(e) => {
+                    // Only digits, max 4
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setNewClient((prev) => ({ ...prev, pin: digits }));
+                  }}
+                  placeholder={NL.pinPH}
+                  maxLength={4}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                <textarea
+                  value={newClient.notes}
+                  onChange={(e) => setNewClient((prev) => ({ ...prev, notes: e.target.value }))}
+                  placeholder={NL.notesPH}
+                  rows={3}
+                  autoComplete="off"
+                />
                 <select value={newClient.interface_mode} onChange={(e) => setNewClient((prev) => ({ ...prev, interface_mode: e.target.value }))}>
                   <option value="standaard">{NL.interfaceStandard}</option>
                   <option value="volwassen">{NL.interfaceAdult}</option>
@@ -523,7 +587,7 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
         </>
       )}
 
-      {view === 'tasks' && (
+      {view === 'tasks' && selected && (
         <>
           <BackHeader title={NL.tileTasks} onBack={() => setView('menu')} />
           <div style={{ padding: '16px' }}>
@@ -603,7 +667,7 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
         </>
       )}
 
-      {view === 'goals' && (
+      {view === 'goals' && selected && (
         <>
           <BackHeader title={NL.tileGoals} onBack={() => setView('menu')} />
           <div style={{ padding: '16px' }}>
@@ -643,7 +707,7 @@ export default function CaregiverDashboard({ caregiver, token, onLogout }) {
         </>
       )}
 
-      {view === 'rewards' && (
+      {view === 'rewards' && selected && (
         <>
           <BackHeader title={NL.tileRewards} onBack={() => setView('menu')} />
           <div style={{ padding: '16px' }}>
